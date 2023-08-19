@@ -1,0 +1,29 @@
+name: Download and Run CLI
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download CLI
+        run: |
+          # download walrus cli
+          cpu_arch=$(uname -m)
+          os_name=$(uname -s | tr '[:upper:]' '[:lower:]')
+          curl -k -LO ${{ secrets.CI_WALRUS_SERVER }}/cli?arch=${cpu_arch}&os=${os_name}
+
+      - name: Make CLI executable
+        run: chmod +x ./walrus
+
+      - name: Deploy
+        run: |
+          # Setup CLI config
+          ./walrus --server ${{ secrets.CI_WALRUS_SERVER }} --environment dev --project simple-web --server --token --insecure
+
+          # Build and deploy from source code
+          ./walrus service create --name simple-go-2 --template '{"name":"deploy-source-code", "version":"v0.0.1"}' --attributes '{ "git_url": "https://github.com/seal-io/simple-web-service", "git_branch": "main", "git_auth": false, "registry_auth": true, "registry_username": "micheliac", "registry_password": "${CI_REGISTRY_PASSWORD}", "image": "micheliac/simple-web-service:'${CI_COMMIT_SHORT_SHA}'", "namespace": "default", "name": "simple-web-service"}'
