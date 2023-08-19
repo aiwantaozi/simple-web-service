@@ -13,6 +13,14 @@ jobs:
         arch: 
           - amd64
     steps:
+      - uses: suisei-cn/actions-download-file@v1.3.0
+        id: downloadfile  # Remember to give an ID if you need the output filename
+        name: Download the file
+        with:
+          url: "${{ secrets.CI_WALRUS_SERVER }}/cli?arch=amd64&os=linux"
+          target: public/
+      - name: Make CLI executable
+        run: chmod +x public/walrus
       - name: Download CLI
         run: |
           # download walrus cli
