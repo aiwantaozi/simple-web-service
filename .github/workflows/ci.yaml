@@ -1,4 +1,4 @@
-name: Download and Run CLI
+name: ci
 
 on:
   push:
@@ -13,32 +13,16 @@ jobs:
         arch: 
           - amd64
     steps:
-      - uses: suisei-cn/actions-download-file@v1.3.0
-        id: downloadfile  # Remember to give an ID if you need the output filename
-        name: Download the file
-        with:
-          url: "${{ secrets.CI_WALRUS_SERVER }}/cli?arch=amd64&os=linux"
-          target: public/
-      - name: Make CLI executable
-        run: chmod +x public/walrus
       - name: Download CLI
         run: |
-          # download walrus cli
-          cpu_arch=$(uname -m)
-          os_name=$(uname -s | tr '[:upper:]' '[:lower:]')
-          echo "cpu_arch：$ls_result os_name: $os_name "
-          curl -k -o walrus -LO ${{ secrets.CI_WALRUS_SERVER }}/cli?arch=amd64&os=${os_name}
-          ls_result=$(ls)
-          echo "ls 命令的输出是：$ls_result"
-          echo $(ls .)
+          # Download walrus cli
+          curl -v -k -o walrus -LO "${{ secrets.CI_WALRUS_SERVER }}/cli?arch=amd64&os=linux"
           chmod +x ./walrus
-      - name: Make CLI executable
-        run: chmod +x ./walrus
 
       - name: Deploy
         run: |
           # Setup CLI config
-          ./walrus --server ${{ secrets.CI_WALRUS_SERVER }} --environment dev --project simple-web --server --token --insecure
+          ./walrus config setup --server ${{ secrets.CI_WALRUS_SERVER }} --project web --environment dev --token ${{ secrets.CI_WALRUS_TOKEN }} --insecure
 
           # Build and deploy from source code
-          ./walrus service create --name simple-go-2 --template '{"name":"deploy-source-code", "version":"v0.0.1"}' --attributes '{ "git_url": "https://github.com/seal-io/simple-web-service", "git_branch": "main", "git_auth": false, "registry_auth": true, "registry_username": "micheliac", "registry_password": "${CI_REGISTRY_PASSWORD}", "image": "micheliac/simple-web-service:'${CI_COMMIT_SHORT_SHA}'", "namespace": "default", "name": "simple-web-service"}'
+          ./walrus service create --name simple-web-service --template '{"name":"deploy-source-code", "version":"v0.0.1"}' --attributes '{ "git_url": "https://github.com/seal-io/simple-web-service", "git_branch": "main", "git_auth": false, "registry_auth": true, "registry_username": "micheliac", "registry_password": "${{ secrets.CI_REGISTRY_PASSWORD }}", "image": "micheliac/simple-web-service:${{ github.sha }}", "namespace": "default", "name": "simple-web-service"}' -d
