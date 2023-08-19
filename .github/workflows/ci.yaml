@@ -8,15 +8,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        arch: 
+          - amd64
     steps:
       - name: Download CLI
         run: |
           # download walrus cli
           cpu_arch=$(uname -m)
           os_name=$(uname -s | tr '[:upper:]' '[:lower:]')
-          curl -k -LO ${{ secrets.CI_WALRUS_SERVER }}/cli?arch=${cpu_arch}&os=${os_name}
-
+          echo "cpu_arch：$ls_result os_name: $os_name "
+          curl -k -o walrus -LO ${{ secrets.CI_WALRUS_SERVER }}/cli?arch=amd64&os=${os_name}
+          ls_result=$(ls)
+          echo "ls 命令的输出是：$ls_result"
+          echo $(ls .)
+          chmod +x ./walrus
       - name: Make CLI executable
         run: chmod +x ./walrus
 
